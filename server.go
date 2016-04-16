@@ -26,21 +26,42 @@ func main() {
 }
 
 func DeploymentHandler(rw http.ResponseWriter, req *http.Request, p httprouter.Params) {
-	payload := decodePayload(req)
-
-	fmt.Printf("request: %v", payload.Repo)
-}
-
-func decodePayload(req *http.Request) github.WebHookPayload {
-	decoder := json.NewDecoder(req.Body)
-
-	var payload github.WebHookPayload
-
-	err := decoder.Decode(&payload)
-
-	if err != nil {
-		panic(err)
+	event_type := req.Header.Get("X-Github-Event")
+	switch event_type {
+	case "deployment":
+		event := decodeDeploymentEvent(req)
+		fmt.Printf("event: %#v", event)
+	case "deployment_status":
+		event := decodeDeploymentStatusEvent(req)
+		fmt.Printf("event: %#v", event)
 	}
 
-	return payload
+}
+
+func decodeDeploymentStatusEvent(req *http.Request) github.DeploymentStatusEvent {
+	decoder := json.NewDecoder(req.Body)
+
+	var event github.DeploymentStatusEvent
+
+	err := decoder.Decode(&event)
+
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	return event
+}
+
+func decodeDeploymentEvent(req *http.Request) github.DeploymentEvent {
+	decoder := json.NewDecoder(req.Body)
+
+	var event github.DeploymentEvent
+
+	err := decoder.Decode(&event)
+
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	return event
 }
