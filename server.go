@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,6 +10,8 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/julienschmidt/httprouter"
 )
+
+type Event interface{}
 
 func main() {
 	route := httprouter.New()
@@ -27,15 +30,18 @@ func main() {
 
 func DeploymentHandler(rw http.ResponseWriter, req *http.Request, p httprouter.Params) {
 	event_type := req.Header.Get("X-Github-Event")
+	GetEvent(req, event_type)
+}
+
+func GetEvent(req *http.Request, event_type string) (Event, error) {
 	switch event_type {
 	case "deployment":
-		event := decodeDeploymentEvent(req)
-		fmt.Printf("event: %#v", event)
+		return decodeDeploymentEvent(req), nil
 	case "deployment_status":
-		event := decodeDeploymentStatusEvent(req)
-		fmt.Printf("event: %#v", event)
+		return decodeDeploymentStatusEvent(req), nil
 	}
 
+	return nil, errors.New("Error: no matched event type")
 }
 
 func decodeDeploymentStatusEvent(req *http.Request) github.DeploymentStatusEvent {
