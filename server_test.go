@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-github/github"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,8 +16,7 @@ func TestGetEventReturnsDeploymentEvent(t *testing.T) {
 
 	event, _ := GetEvent(req, "deployment")
 
-	var deploy_event github.DeploymentEvent
-	assert.IsType(deploy_event, event)
+	assert.Equal(event.EventType, "Deployment")
 }
 
 func TestGetEventReturnsDeploymentStatusEvent(t *testing.T) {
@@ -29,6 +27,5 @@ func TestGetEventReturnsDeploymentStatusEvent(t *testing.T) {
 
 	event, _ := GetEvent(req, "deployment_status")
 
-	var deploy_event github.DeploymentStatusEvent
-	assert.IsType(deploy_event, event)
+	assert.Equal(event.EventType, "DeploymentStatus")
 }

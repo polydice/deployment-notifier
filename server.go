@@ -16,6 +16,7 @@ type GithubEvent struct {
 	Repo             *github.Repository
 	EventType        string
 	DeploymentStatus *github.DeploymentStatus
+	Deployment       *github.Deployment
 }
 
 func main() {
@@ -37,17 +38,12 @@ func DeploymentHandler(rw http.ResponseWriter, req *http.Request, p httprouter.P
 	event_type := req.Header.Get("X-Github-Event")
 	event, err := GetEvent(req, event_type)
 
-	fmt.Printf("Received %v event of %v", event_type, *event.Repo.Name)
-
 	if err != nil {
-		fmt.Print(err)
+		panic(err)
 	}
 
 	datadog_client := GetDataDogClient()
-	datadog_event := &datadog.Event{
-		Title: "Received " + event_type + " event of " + *event.Repo.Name,
-		Text:  "Test",
-	}
+	datadog_event := GetDatadogEvent(event)
 
 	_, datadog_err := datadog_client.PostEvent(datadog_event)
 	if err != nil {
@@ -64,6 +60,22 @@ func GetEvent(req *http.Request, event_type string) (GithubEvent, error) {
 	}
 
 	return GithubEvent{}, errors.New("Error: no matched event type")
+}
+
+func GetDatadogEvent(event GithubEvent) *datadog.Event {
+	repoName := *event.Repo.FullName + ":" + *event.Deployment.SHA
+	status := event.DeploymentStatus
+	switch status {
+	case nil:
+		return &datadog.Event{
+			Title: "Deployment of " + repoName + " started.",
+		}
+	default:
+		return &datadog.Event{
+			Title: "Deployment of " + repoName + " is " + *status.State,
+			Text:  "Status: " + "[" + *status.State + "](" + *status.TargetURL + ")",
+		}
+	}
 }
 
 func GetDataDogClient() *datadog.Client {
@@ -89,6 +101,7 @@ func decodeDeploymentStatusEvent(req *http.Request) GithubEvent {
 		Repo:             event.Repo,
 		EventType:        "DeploymentStatus",
 		DeploymentStatus: event.DeploymentStatus,
+		Deployment:       event.Deployment,
 	}
 
 	return github_event
@@ -106,8 +119,9 @@ func decodeDeploymentEvent(req *http.Request) GithubEvent {
 	}
 
 	github_event := GithubEvent{
-		Repo:      event.Repo,
-		EventType: "DeploymentStatus",
+		Repo:       event.Repo,
+		EventType:  "DeploymentStatus",
+		Deployment: event.Deployment,
 	}
 
 	return github_event
