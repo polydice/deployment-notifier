@@ -78,7 +78,7 @@ func NewDatadogEvent(event *GithubEvent) *datadog.Event {
 	default:
 		return &datadog.Event{
 			Title: "Deployment of " + repoName + " is " + *status.State,
-			Text:  "Status: " + "[" + *status.State + "](" + *status.TargetURL + ")",
+			Text:  "%%% \n Status: " + "[" + *status.State + "](" + *status.TargetURL + ") \n %%%",
 		}
 	}
 }
