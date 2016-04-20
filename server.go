@@ -27,6 +27,8 @@ func main() {
 		port = "8080"
 	}
 
+	checkDatadogKeys()
+
 	route.POST("/webhook", DeploymentHandler)
 
 	fmt.Println("Starting server on :" + port)
@@ -78,6 +80,19 @@ func GetDatadogEvent(event GithubEvent) *datadog.Event {
 			Title: "Deployment of " + repoName + " is " + *status.State,
 			Text:  "Status: " + "[" + *status.State + "](" + *status.TargetURL + ")",
 		}
+	}
+}
+
+func checkDatadogKeys() {
+	api_key := os.Getenv("DATADOG_API_KEY")
+	app_key := os.Getenv("DATADOG_APP_KEY")
+
+	if api_key == "" {
+		panic("Api key can't be empty!")
+	}
+
+	if app_key == "" {
+		panic("Application key can't be empty!")
 	}
 }
 
