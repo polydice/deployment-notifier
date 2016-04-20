@@ -39,8 +39,11 @@ func DeploymentHandler(rw http.ResponseWriter, req *http.Request, p httprouter.P
 	event, err := GetEvent(req, event_type)
 
 	if err != nil {
-		panic(err)
+		fmt.Print(err)
+		return
 	}
+
+	fmt.Printf("Recieved %v event from %v\n", event_type, *event.Repo.FullName)
 
 	datadog_client := GetDataDogClient()
 	datadog_event := GetDatadogEvent(event)
@@ -59,7 +62,7 @@ func GetEvent(req *http.Request, event_type string) (GithubEvent, error) {
 		return decodeDeploymentStatusEvent(req), nil
 	}
 
-	return GithubEvent{}, errors.New("Error: no matched event type")
+	return GithubEvent{}, errors.New("Not Deployment or DeploymentStatus event\n")
 }
 
 func GetDatadogEvent(event GithubEvent) *datadog.Event {
