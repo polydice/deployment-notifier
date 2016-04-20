@@ -138,7 +138,7 @@ func decodeDeploymentEvent(req *http.Request) GithubEvent {
 
 	github_event := GithubEvent{
 		Repo:       event.Repo,
-		EventType:  "DeploymentStatus",
+		EventType:  "Deployment",
 		Deployment: event.Deployment,
 	}
 
