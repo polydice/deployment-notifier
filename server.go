@@ -38,7 +38,7 @@ func main() {
 
 func DeploymentHandler(rw http.ResponseWriter, req *http.Request, p httprouter.Params) {
 	event_type := req.Header.Get("X-Github-Event")
-	event, err := GetEvent(req, event_type)
+	event, err := NewGithubEvent(req, event_type)
 
 	if err != nil {
 		fmt.Print(err)
@@ -47,8 +47,8 @@ func DeploymentHandler(rw http.ResponseWriter, req *http.Request, p httprouter.P
 
 	fmt.Printf("Recieved %v event from %v\n", event_type, *event.Repo.FullName)
 
-	datadog_client := GetDataDogClient()
-	datadog_event := GetDatadogEvent(event)
+	datadog_client := NewDataDogClient()
+	datadog_event := NewDatadogEvent(&event)
 
 	_, datadog_err := datadog_client.PostEvent(datadog_event)
 	if err != nil {
@@ -56,7 +56,7 @@ func DeploymentHandler(rw http.ResponseWriter, req *http.Request, p httprouter.P
 	}
 }
 
-func GetEvent(req *http.Request, event_type string) (GithubEvent, error) {
+func NewGithubEvent(req *http.Request, event_type string) (GithubEvent, error) {
 	switch event_type {
 	case "deployment":
 		return decodeDeploymentEvent(req), nil
@@ -67,7 +67,7 @@ func GetEvent(req *http.Request, event_type string) (GithubEvent, error) {
 	return GithubEvent{}, errors.New("Not Deployment or DeploymentStatus event\n")
 }
 
-func GetDatadogEvent(event GithubEvent) *datadog.Event {
+func NewDatadogEvent(event *GithubEvent) *datadog.Event {
 	repoName := *event.Repo.FullName + ":" + *event.Deployment.SHA
 	status := event.DeploymentStatus
 	switch status {
@@ -96,7 +96,7 @@ func checkDatadogKeys() {
 	}
 }
 
-func GetDataDogClient() *datadog.Client {
+func NewDataDogClient() *datadog.Client {
 	api_key := os.Getenv("DATADOG_API_KEY")
 	app_key := os.Getenv("DATADOG_APP_KEY")
 
@@ -138,7 +138,7 @@ func decodeDeploymentEvent(req *http.Request) GithubEvent {
 
 	github_event := GithubEvent{
 		Repo:       event.Repo,
-		EventType:  "DeploymentStatus",
+		EventType:  "Deployment",
 		Deployment: event.Deployment,
 	}
 
