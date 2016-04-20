@@ -73,12 +73,14 @@ func NewDatadogEvent(event *GithubEvent) *datadog.Event {
 	switch status {
 	case nil:
 		return &datadog.Event{
-			Title: "Deployment of " + repoName + " started.",
+			Title:    "Deployment of " + repoName + " started.",
+			Resource: "Github Deployment",
 		}
 	default:
 		return &datadog.Event{
-			Title: "Deployment of " + repoName + " is " + *status.State,
-			Text:  "%%% \n Status: " + "[" + *status.State + "](" + *status.TargetURL + ") \n %%%",
+			Title:    "Deployment of " + repoName + " is " + *status.State,
+			Text:     "%%% \n Status: " + "[" + *status.State + "](" + *status.TargetURL + ") \n %%%",
+			Resource: "Github Deployment",
 		}
 	}
 }
